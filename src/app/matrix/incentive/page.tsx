@@ -1,13 +1,7 @@
 "use client";
-import PlaceholderPage from "@/components/PlaceholderPage";
-import { Coins } from "lucide-react";
 
-export default function IncentivePage() {
-  return (
-    <PlaceholderPage
-      title="激励结算"
-      icon={<Coins className="w-5 h-5 text-gray-900" />}
-      description="BD 激励 · 月度结算 · 爆款奖励"
-    />
-  );
-}
+import type { LucideIcon } from "lucide-react";
+import { Award, Coins, Download, TrendingUp } from "lucide-react";
+const stats: [string, string, LucideIcon][] = [["本月激励池", "¥ 32,800", Coins], ["已完成结算", "¥ 18,600", TrendingUp], ["待确认条目", "14", Award]];
+const rows = [["林野食记", "人物纪实短片", "1,286,000", "爆款奖励", "¥ 2,400"], ["慢生活研究所", "社区零售观察", "684,000", "优质内容", "¥ 1,200"], ["阿汤的周末", "两天一夜路线", "432,000", "完成奖励", "¥ 600"], ["巷口故事", "早餐店的八分钟", "938,000", "优质内容", "¥ 1,200"]];
+export default function IncentivePage() { return <div className="mx-auto max-w-7xl p-6 lg:p-8"><div className="mb-6 flex items-start justify-between"><div className="flex gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-300"><Coins className="h-5 w-5" /></div><div><h1 className="text-xl font-bold">激励结算</h1><p className="mt-1 text-sm text-gray-500">以内容结果为导向的协作激励与月度结算</p></div></div><button className="flex gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"><Download className="h-4 w-4" />导出结算单</button></div><div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">作品集演示：金额、创作者和内容数据均为虚构示例。</div><div className="grid gap-4 md:grid-cols-3">{stats.map(([t, v, Icon]) => { return <div key={t} className="rounded-xl border border-gray-200 bg-white p-5"><Icon className="mb-5 h-5 w-5 text-gray-400" /><p className="text-2xl font-bold">{v}</p><p className="mt-1 text-sm text-gray-500">{t}</p></div>; })}</div><section className="mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white"><div className="flex items-center justify-between border-b border-gray-100 p-5"><div><h2 className="font-semibold">2026 年 8 月结算明细</h2><p className="mt-1 text-xs text-gray-500">按发布完成度与传播表现生成的示例记录</p></div><span className="rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-700">草稿</span></div><div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead className="bg-gray-50 text-xs text-gray-500"><tr>{["协作方","内容项目","模拟播放","激励类型","结算金额"].map((h) => <th key={h} className="px-5 py-3 font-medium">{h}</th>)}</tr></thead><tbody>{rows.map((r) => <tr key={r[0]} className="border-t border-gray-100"><td className="px-5 py-4 font-medium">{r[0]}</td><td className="px-5 py-4 text-gray-600">{r[1]}</td><td className="px-5 py-4">{r[2]}</td><td className="px-5 py-4"><span className="rounded-full bg-gray-100 px-2 py-1 text-xs">{r[3]}</span></td><td className="px-5 py-4 font-semibold">{r[4]}</td></tr>)}</tbody></table></div></section></div>; }

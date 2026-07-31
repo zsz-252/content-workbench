@@ -1,13 +1,7 @@
 "use client";
-import PlaceholderPage from "@/components/PlaceholderPage";
-import { Inbox } from "lucide-react";
 
-export default function CollectionPage() {
-  return (
-    <PlaceholderPage
-      title="发布回收"
-      icon={<Inbox className="w-5 h-5 text-gray-900" />}
-      description="素材回收 · 发布跟踪"
-    />
-  );
-}
+import type { LucideIcon } from "lucide-react";
+import { Check, Clock3, Inbox, Link2, Send, UploadCloud } from "lucide-react";
+const stats: [string, string, LucideIcon][] = [["本周待发布", "8", Clock3], ["已回收链接", "26", Link2], ["复盘已完成", "17", Check]];
+const tasks = [["早餐店人物短片", "林野食记", "已发布", "08-06"], ["周末两天一夜路线", "阿汤的周末", "待回收链接", "08-09"], ["社区零售观察", "慢生活研究所", "审核通过", "08-13"], ["健康生活的一天", "巷口故事", "待发布", "08-18"]];
+export default function CollectionPage() { return <div className="mx-auto max-w-7xl p-6 lg:p-8"><div className="mb-6 flex items-start justify-between"><div className="flex gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-300"><Inbox className="h-5 w-5" /></div><div><h1 className="text-xl font-bold">发布回收</h1><p className="mt-1 text-sm text-gray-500">统一追踪内容链接、发布状态与复盘素材</p></div></div><button className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm text-white"><UploadCloud className="h-4 w-4" />回收内容</button></div><div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">作品集演示：所有任务、协作方与发布时间均为虚构示例。</div><div className="grid gap-4 md:grid-cols-3">{stats.map(([t, v, Icon]) => { return <div key={t} className="rounded-xl border border-gray-200 bg-white p-5"><Icon className="mb-5 h-5 w-5 text-gray-400" /><p className="text-2xl font-bold">{v}</p><p className="mt-1 text-sm text-gray-500">{t}</p></div>; })}</div><section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5"><h2 className="mb-4 font-semibold">发布任务</h2><div className="divide-y divide-gray-100">{tasks.map((t) => <div key={t[0]} className="flex flex-wrap items-center gap-4 py-4"><div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100"><Send className="h-4 w-4 text-gray-500" /></div><div className="min-w-48 flex-1"><p className="text-sm font-medium">{t[0]}</p><p className="mt-1 text-xs text-gray-500">协作方：{t[1]} · 计划 {t[3]}</p></div><span className={t[2] === "已发布" ? "rounded-full bg-green-50 px-3 py-1 text-xs text-green-700" : "rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-700"}>{t[2]}</span><button className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50">查看详情</button></div>)}</div></section></div>; }

@@ -1,13 +1,16 @@
 "use client";
-import PlaceholderPage from "@/components/PlaceholderPage";
-import { LayoutTemplate } from "lucide-react";
+
+import { useState } from "react";
+import { LayoutTemplate, MessageSquareText, Plus, Send, Sparkles } from "lucide-react";
+
+const templates = [
+  ["人物纪实短片", "用具体人物、真实细节和行动转折建立情感共鸣", "采访 + 旁白", "12 次使用"],
+  ["行业趋势口播", "用反差数字打开话题，拆解一个可复用的行动方法", "口播解读", "28 次使用"],
+  ["城市周末指南", "低决策成本路线，串联交通、场景与体验价值", "攻略种草", "19 次使用"],
+];
 
 export default function TemplatesPage() {
-  return (
-    <PlaceholderPage
-      title="内容模板搭建"
-      icon={<LayoutTemplate className="w-5 h-5 text-gray-900" />}
-      description="视频模板 · 脚本模板"
-    />
-  );
+  const [selected, setSelected] = useState(0); const [input, setInput] = useState(""); const [messages, setMessages] = useState([{ role: "AI", text: "我已读取“人物纪实短片”模板。你可以告诉我本次想突出的人物、场景或核心转折，我会协助补全内容结构。" }]);
+  const send = () => { if (!input.trim()) return; setMessages((old) => [...old, { role: "你", text: input }, { role: "AI", text: "收到。建议先把故事落在一个可拍摄的具体场景里：人物正在解决什么问题、做了什么选择、结果如何被看见。" }]); setInput(""); };
+  return <div className="flex h-[calc(100vh-0px)] min-h-[680px] flex-col"><div className="mx-auto flex w-full max-w-7xl flex-1 flex-col overflow-hidden p-6 lg:p-8"><div className="mb-5 flex items-start justify-between"><div className="flex gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-300"><LayoutTemplate className="h-5 w-5" /></div><div><h1 className="text-xl font-bold">内容模板搭建</h1><p className="mt-1 text-sm text-gray-500">沉淀结构化内容方法，并在对话中完成本次创作</p></div></div><button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"><Plus className="h-4 w-4" />新建模板</button></div><div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">作品集演示：模板、对话及使用数据均为虚构示例。右下角 AI 设置可接入你自己的模型。</div><div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[320px_minmax(0,1fr)]"><section className="overflow-y-auto rounded-2xl border border-gray-200 bg-white p-3">{templates.map((item, i) => <button key={item[0]} onClick={() => { setSelected(i); setMessages([{ role: "AI", text: `已切换到“${item[0]}”模板。告诉我你准备创作什么内容？` }]); }} className={selected === i ? "mb-2 w-full rounded-xl bg-yellow-50 p-4 text-left ring-1 ring-yellow-300" : "mb-2 w-full rounded-xl p-4 text-left hover:bg-gray-50"}><p className="font-medium text-gray-900">{item[0]}</p><p className="mt-1 text-xs leading-5 text-gray-500">{item[1]}</p><div className="mt-3 flex justify-between text-xs text-gray-400"><span>{item[2]}</span><span>{item[3]}</span></div></button>)}</section><section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white"><div className="border-b border-gray-100 px-5 py-4"><p className="font-semibold">{templates[selected][0]}</p><p className="mt-1 text-xs text-gray-500">{templates[selected][1]}</p></div><div className="flex-1 space-y-4 overflow-y-auto p-5">{messages.map((m, i) => <div key={i} className={m.role === "你" ? "ml-auto max-w-[80%] rounded-2xl rounded-tr-sm bg-gray-900 px-4 py-3 text-sm leading-6 text-white" : "max-w-[84%] rounded-2xl rounded-tl-sm bg-gray-100 px-4 py-3 text-sm leading-6 text-gray-700"}><span className="mb-1 block text-[10px] opacity-60">{m.role}</span>{m.text}</div>)}</div><div className="flex gap-2 border-t border-gray-100 p-4"><MessageSquareText className="mt-2 h-4 w-4 text-gray-400" /><textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="补充创作信息，Enter 发送" className="max-h-24 min-h-10 flex-1 resize-none bg-transparent py-2 text-sm outline-none" /><button onClick={send} className="h-9 rounded-lg bg-gray-900 px-3 text-white"><Send className="h-4 w-4" /></button></div></section></div></div></div>;
 }
