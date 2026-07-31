@@ -31,7 +31,7 @@ const navGroups = [
       { title: "营销日历",   to: "/official/calendar",   icon: CalendarDays },
       { title: "案例库",     to: "/official/cases",      icon: Library },
       { title: "脚本生成器", to: "/official/script-gen", icon: ScrollText },
-      { title: "四维审核",   to: "/official/review",     icon: ShieldCheck },
+      { title: "六维审核",   to: "/official/review",     icon: ShieldCheck },
     ],
   },
   {
