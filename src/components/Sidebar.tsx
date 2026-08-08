@@ -16,7 +16,6 @@ import {
   ShieldCheck,
   Network,
   LayoutTemplate,
-  Coins,
   Inbox,
   Sparkles,
 } from "lucide-react";
@@ -38,9 +37,9 @@ const navGroups = [
     id: "matrix",
     label: "达人矩阵",
     items: [
-      { title: "矩阵运营中心", to: "/matrix/hub",       icon: Network },
-      { title: "内容模板搭建", to: "/matrix/templates", icon: LayoutTemplate },
-      { title: "激励结算",     to: "/matrix/incentive", icon: Coins },
+      { title: "矩阵运营中心", to: "/matrix/hub",        icon: Network },
+      { title: "活动管理",     to: "/matrix/activities",  icon: Megaphone },
+      { title: "内容模板搭建", to: "/matrix/templates",  icon: LayoutTemplate },
       { title: "发布回收",     to: "/matrix/collection", icon: Inbox },
     ],
   },
