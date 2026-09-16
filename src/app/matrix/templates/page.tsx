@@ -1,16 +1,168 @@
 "use client";
 
 import { useState } from "react";
-import { LayoutTemplate, MessageSquareText, Plus, Send, Sparkles } from "lucide-react";
+import { LayoutTemplate, Trophy, Megaphone, Star, Store, Paperclip, Loader2, Sparkles } from "lucide-react";
+import { chat } from "@/lib/ai/client";
+import { isConfigured, loadSettings } from "@/lib/ai/providers";
+import AISettingsModal from "@/components/AISettingsModal";
 
-const templates = [
-  ["人物纪实短片", "用具体人物、真实细节和行动转折建立情感共鸣", "采访 + 旁白", "12 次使用"],
-  ["行业趋势口播", "用反差数字打开话题，拆解一个可复用的行动方法", "口播解读", "28 次使用"],
-  ["城市周末指南", "低决策成本路线，串联交通、场景与体验价值", "攻略种草", "19 次使用"],
+const SCENARIOS = [
+  { id: "conference", label: "行业会议", icon: Trophy, desc: "司南榜、行业峰会、专题沙龙、品类大会等" },
+  { id: "campaign", label: "平台活动", icon: Megaphone, desc: "神券节、818、双12、新店流量扶持等" },
+  { id: "benchmark", label: "标杆案例", icon: Star, desc: "成功故事、数据亮点、商家证言等" },
+  { id: "store", label: "小店故事", icon: Store, desc: "BD探店日记、社区小店、烟火气记录" },
 ];
 
+const ACCOUNTS = [
+  { id: "bd", label: "BD账号", desc: "行业观察者视角，专业但有温度" },
+  { id: "merchant", label: "商家账号", desc: "亲历者视角，第一人称真实感" },
+];
+
+const PLATFORMS = ["小红书", "视频号", "抖音", "大众点评"];
+const STYLES = ["真实感强", "轻松幽默", "温暖治愈", "数据驱动", "故事化叙事", "简洁直接"];
+
 export default function TemplatesPage() {
-  const [selected, setSelected] = useState(0); const [input, setInput] = useState(""); const [messages, setMessages] = useState([{ role: "AI", text: "我已读取“人物纪实短片”模板。你可以告诉我本次想突出的人物、场景或核心转折，我会协助补全内容结构。" }]);
-  const send = () => { if (!input.trim()) return; setMessages((old) => [...old, { role: "你", text: input }, { role: "AI", text: "收到。建议先把故事落在一个可拍摄的具体场景里：人物正在解决什么问题、做了什么选择、结果如何被看见。" }]); setInput(""); };
-  return <div className="flex h-[calc(100vh-0px)] min-h-[680px] flex-col"><div className="mx-auto flex w-full max-w-7xl flex-1 flex-col overflow-hidden p-6 lg:p-8"><div className="mb-5 flex items-start justify-between"><div className="flex gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-300"><LayoutTemplate className="h-5 w-5" /></div><div><h1 className="text-xl font-bold">内容模板搭建</h1><p className="mt-1 text-sm text-gray-500">沉淀结构化内容方法，并在对话中完成本次创作</p></div></div><button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"><Plus className="h-4 w-4" />新建模板</button></div><div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">作品集演示：模板、对话及使用数据均为虚构示例。右下角 AI 设置可接入你自己的模型。</div><div className="grid min-h-0 flex-1 gap-5 lg:grid-cols-[320px_minmax(0,1fr)]"><section className="overflow-y-auto rounded-2xl border border-gray-200 bg-white p-3">{templates.map((item, i) => <button key={item[0]} onClick={() => { setSelected(i); setMessages([{ role: "AI", text: `已切换到“${item[0]}”模板。告诉我你准备创作什么内容？` }]); }} className={selected === i ? "mb-2 w-full rounded-xl bg-yellow-50 p-4 text-left ring-1 ring-yellow-300" : "mb-2 w-full rounded-xl p-4 text-left hover:bg-gray-50"}><p className="font-medium text-gray-900">{item[0]}</p><p className="mt-1 text-xs leading-5 text-gray-500">{item[1]}</p><div className="mt-3 flex justify-between text-xs text-gray-400"><span>{item[2]}</span><span>{item[3]}</span></div></button>)}</section><section className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white"><div className="border-b border-gray-100 px-5 py-4"><p className="font-semibold">{templates[selected][0]}</p><p className="mt-1 text-xs text-gray-500">{templates[selected][1]}</p></div><div className="flex-1 space-y-4 overflow-y-auto p-5">{messages.map((m, i) => <div key={i} className={m.role === "你" ? "ml-auto max-w-[80%] rounded-2xl rounded-tr-sm bg-gray-900 px-4 py-3 text-sm leading-6 text-white" : "max-w-[84%] rounded-2xl rounded-tl-sm bg-gray-100 px-4 py-3 text-sm leading-6 text-gray-700"}><span className="mb-1 block text-[10px] opacity-60">{m.role}</span>{m.text}</div>)}</div><div className="flex gap-2 border-t border-gray-100 p-4"><MessageSquareText className="mt-2 h-4 w-4 text-gray-400" /><textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} placeholder="补充创作信息，Enter 发送" className="max-h-24 min-h-10 flex-1 resize-none bg-transparent py-2 text-sm outline-none" /><button onClick={send} className="h-9 rounded-lg bg-gray-900 px-3 text-white"><Send className="h-4 w-4" /></button></div></section></div></div></div>;
+  const [scenario, setScenario] = useState<string | null>(null);
+  const [bg, setBg] = useState("");
+  const [extra, setExtra] = useState("");
+  const [account, setAccount] = useState<string | null>(null);
+  const [platform, setPlatform] = useState("小红书");
+  const [style, setStyle] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState("");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [err, setErr] = useState("");
+
+  const generate = async () => {
+    if (!account || loading) return;
+    if (!isConfigured(loadSettings())) { setSettingsOpen(true); return; }
+    setLoading(true); setErr(""); setResult("");
+    const sc = SCENARIOS.find((s) => s.id === scenario);
+    const ac = ACCOUNTS.find((a) => a.id === account);
+    try {
+      const out = await chat(
+        `你是一名资深新媒体内容策划。请基于以下配置，生成一份可直接发布的内容包（含标题、正文、3-5个话题标签）。
+传播场景：${sc ? `${sc.label}（${sc.desc}）` : "通用内容"}
+发布账号：${ac ? `${ac.label}（${ac.desc}）` : ""}
+目标平台：${platform}${style ? `\n风格调性：${style}` : ""}
+${bg ? `\n背景资料：\n${bg}` : ""}${extra ? `\n补充素材：\n${extra}` : ""}
+请直接输出内容包，不要解释。`,
+        { temperature: 0.7, maxTokens: 1800 }
+      );
+      setResult(out);
+    } catch (e) { setErr((e as Error).message); } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="mx-auto max-w-3xl p-6 lg:p-8">
+      <AISettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#FFD100" }}>
+          <LayoutTemplate className="h-5 w-5 text-gray-900" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">内容模板搭建</h1>
+          <p className="mt-0.5 text-sm text-gray-500">选择场景配置，一键生成可发布的内容包</p>
+        </div>
+      </div>
+
+      <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        作品集演示：场景与文案为虚构示例。配置你自己的 API Key 后可真实生成内容包。
+      </div>
+
+      {/* 传播场景 */}
+      <section className="mb-6 rounded-2xl border border-gray-100 bg-white p-5">
+        <h2 className="mb-4 text-base font-bold text-gray-900">传播场景</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {SCENARIOS.map((s) => (
+            <button key={s.id} onClick={() => setScenario(s.id)}
+              className={scenario === s.id ? "rounded-xl border-2 p-4 text-left" : "rounded-xl border border-gray-100 p-4 text-left hover:border-gray-300"}
+              style={scenario === s.id ? { borderColor: "#FFD100", background: "#FFFBEB" } : {}}>
+              <div className={scenario === s.id ? "mb-2 flex h-8 w-8 items-center justify-center rounded-lg" : "mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100"}
+                style={scenario === s.id ? { background: "#FFD100" } : {}}>
+                <s.icon className="h-4 w-4 text-gray-900" />
+              </div>
+              <div className="text-sm font-semibold text-gray-900">{s.label}</div>
+              <div className="mt-1 text-xs leading-4 text-gray-400">{s.desc}</div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* 背景资料 */}
+      <section className="mb-6 rounded-2xl border border-gray-100 bg-white p-5">
+        <div className="mb-2 flex items-center justify-between">
+          <label className="text-sm font-medium text-gray-800">背景资料 <span className="font-normal text-gray-400">可选，填写后效果更好</span></label>
+          <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800"><Paperclip className="h-3.5 w-3.5" /> 上传文件</button>
+        </div>
+        <textarea value={bg} onChange={(e) => setBg(e.target.value)}
+          placeholder="直接粘贴背景信息：活动简介、品牌资料、数据报告、商家故事等"
+          className="min-h-24 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:border-yellow-400 focus:bg-white" />
+        <div className="mt-1 text-xs text-gray-300">{bg.length} 字</div>
+
+        <div className="mb-2 mt-4 flex items-center justify-between">
+          <label className="text-sm font-medium text-gray-800">补充素材 <span className="font-normal text-gray-400">可选</span></label>
+          <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800"><Paperclip className="h-3.5 w-3.5" /> 上传文件</button>
+        </div>
+        <textarea value={extra} onChange={(e) => setExtra(e.target.value)}
+          placeholder="关键数据、金句、亮点描述等零散信息（AI会根据场景自动适配）"
+          className="min-h-20 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:border-yellow-400 focus:bg-white" />
+        <div className="mt-1 text-xs text-gray-300">{extra.length} 字</div>
+      </section>
+
+      {/* 发布账号 */}
+      <section className="mb-6 rounded-2xl border border-gray-100 bg-white p-5">
+        <h2 className="mb-4 text-base font-bold text-gray-900">发布账号 <span className="text-red-500">*</span></h2>
+        <div className="grid grid-cols-2 gap-3">
+          {ACCOUNTS.map((a) => (
+            <button key={a.id} onClick={() => setAccount(a.id)}
+              className={account === a.id ? "rounded-xl border-2 p-4 text-left" : "rounded-xl border border-gray-100 p-4 text-left hover:border-gray-300"}
+              style={account === a.id ? { borderColor: "#FFD100", background: "#FFFBEB" } : {}}>
+              <div className="text-sm font-semibold text-gray-900">{a.label}</div>
+              <div className="mt-1 text-xs text-gray-400">{a.desc}</div>
+            </button>
+          ))}
+        </div>
+
+        <h2 className="mb-3 mt-6 text-base font-bold text-gray-900">目标平台</h2>
+        <div className="flex flex-wrap gap-2">
+          {PLATFORMS.map((p) => (
+            <button key={p} onClick={() => setPlatform(p)}
+              className={platform === p ? "rounded-lg px-3.5 py-1.5 text-sm font-medium text-gray-900" : "rounded-lg bg-gray-50 px-3.5 py-1.5 text-sm text-gray-600 hover:bg-gray-100"}
+              style={platform === p ? { background: "#FFD100" } : {}}>
+              {p}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-gray-400">图文笔记，种草感强，情绪价值高</p>
+
+        <h2 className="mb-3 mt-6 text-base font-bold text-gray-900">风格调性 <span className="font-normal text-sm text-gray-400">可选</span></h2>
+        <div className="flex flex-wrap gap-2">
+          {STYLES.map((s) => (
+            <button key={s} onClick={() => setStyle(style === s ? null : s)}
+              className={style === s ? "rounded-lg px-3.5 py-1.5 text-sm font-medium text-gray-900" : "rounded-lg bg-gray-50 px-3.5 py-1.5 text-sm text-gray-600 hover:bg-gray-100"}
+              style={style === s ? { background: "#FFD100" } : {}}>
+              {s}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <button onClick={generate} disabled={!account || loading}
+        className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-gray-900 hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
+        style={{ background: "#FFD100" }}>
+        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+        {loading ? "生成中…" : "一键生成内容包"}
+      </button>
+      {!account && <p className="mt-2 text-center text-sm text-gray-400">请选择发布账号后生成</p>}
+      {err && <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{err}</p>}
+
+      {result && (
+        <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-5">
+          <h2 className="mb-3 text-base font-bold text-gray-900">生成结果</h2>
+          <div className="whitespace-pre-wrap text-sm leading-7 text-gray-700">{result}</div>
+        </div>
+      )}
+    </div>
+  );
 }

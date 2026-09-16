@@ -1,29 +1,141 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowUpRight, Bookmark, Library, Search, Sparkles, Tag } from "lucide-react";
+import { Flame, BookOpen, Trophy, Sparkles, RefreshCw, ListOrdered, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
-const cases = [
-  { title: "一条“凌晨四点”的短片，为什么让评论区集体共情", type: "情绪叙事", tag: "内容拆解", heat: "82.6万", desc: "用一个具体时间锚点打开真实人物故事，再把行业价值隐藏在行动细节里。", color: "bg-orange-100" },
-  { title: "社区早餐店的八分钟：把效率故事拍得有温度", type: "商家案例", tag: "人物纪实", heat: "64.2万", desc: "从用户等待感受切入，而不是直接描述经营成绩，建立可感知的价值主张。", color: "bg-yellow-100" },
-  { title: "小城周末游的爆款公式：距离感与新鲜感如何平衡", type: "趋势洞察", tag: "选题方法", heat: "51.8万", desc: "用低决策成本降低观看门槛，并在内容中连续提供可复制的行动信息。", color: "bg-emerald-100" },
-  { title: "把复杂服务讲明白：三段式口播的留存设计", type: "表达方法", tag: "脚本结构", heat: "39.5万", desc: "反差钩子、真实场景、一个具体方法，形成紧凑而可信的表达闭环。", color: "bg-blue-100" },
-  { title: "从评论区反推选题：高互动内容的共同语言", type: "运营策略", tag: "用户洞察", heat: "32.1万", desc: "从评论里的提问、争议和经验分享中，提炼下一轮内容的共鸣关键词。", color: "bg-violet-100" },
-  { title: "不靠大场面，如何用一张菜单拍出人物关系", type: "创意表达", tag: "镜头语言", heat: "28.4万", desc: "以具象物件承载人物关系，让画面信息代替解释性旁白。", color: "bg-rose-100" },
+type Brief = {
+  category: string;
+  source: string;
+  title: string;
+  summary: string;
+};
+
+const MAIN_TABS = ["每日热点", "商家案例", "营销案例"] as const;
+const SUB_SOURCES = [
+  { name: "行业资讯", sub: "虎嗅早报 · 36氪8点1氪" },
+  { name: "抖音热榜", sub: "实时热度排行" },
+  { name: "微博热榜", sub: "实时热度排行" },
+];
+const DATES = ["最新", "09-15", "09-14", "09-11", "09-10", "09-03", "09-01", "08-31", "08-27"];
+
+// 全部为虚构示例内容
+const BRIEFS: Brief[] = [
+  { category: "平台动态", source: "人人都是产品经理", title: "抖音9月新规落地流量逻辑重构", summary: "抖音9月完成覆盖内容审核、算法分发、直播、MCN、电商的系统性生态升级，短视频流量池分配更强调完播与互动质量，搬运与低质混剪流量进一步压缩。" },
+  { category: "平台动态", source: "亿邦动力", title: "TikTokShop美区开放图文挂车权限", summary: "正值2026年黑五备战关键期，TikTok Shop美区面向全品类优质跨境POP商家及达人开放图文挂车权限，图文种草正式成为短视频之外的第二条转化链路。" },
+  { category: "消费趋势", source: "微博-零售日报", title: "高价月饼礼盒遇冷散装月饼卖爆", summary: "中秋临近，月饼市场两极分化明显：高价礼盒提前打折仍遇冷，7至8元的散装月饼柜台人气最高，消费理性化继续压制节日溢价，消费者已看懂礼盒溢价套路。" },
+  { category: "平台动态", source: "微博-电商日报", title: "中秋电商大促扎堆抖音商城定档", summary: "中秋档电商竞争白热化：天猫中秋团圆季发放全品类券，京东中秋专场持续，抖音商城中秋大促定档，商家可选择立减或一件直降玩法。" },
+  { category: "行业政策", source: "新浪新闻", title: "多地发布双节价格告诫严查哄抬物价", summary: "中秋国庆双节临近，多地市场监管部门密集发布价格提醒告诫书，针对月饼、大闸蟹、餐饮、旅游住宿等重点场景，不得哄抬价格、虚构原价、先提价后打折。" },
+  { category: "品牌营销", source: "微博-大白兔官方", title: "大白兔联名崩坏星穹铁道快闪开启", summary: "国民糖果大白兔与崩坏星穹铁道的联名礼盒线上开售，线下快闪多城接力开启，二次元IP已是餐饮零售获取年轻客群的标准动作。" },
+  { category: "品牌营销", source: "中国消费者报", title: "服贸会首联名潮玩IP文创爆火", summary: "2026年服贸会首次与潮玩IP跨界联名，多品类联名文创成为热门纪念伴手礼，潮玩IP正成为大型会展与公共文化面向年轻人的沟通媒介。" },
 ];
 
 export default function CasesPage() {
-  const [query, setQuery] = useState("");
-  const [active, setActive] = useState("全部");
-  const [saved, setSaved] = useState<string[]>([]);
-  const types = ["全部", ...Array.from(new Set(cases.map((item) => item.type)))];
-  const filtered = useMemo(() => cases.filter((item) => (active === "全部" || item.type === active) && `${item.title}${item.desc}${item.tag}`.includes(query.trim())), [active, query]);
-  const toggleSave = (title: string) => setSaved((prev) => prev.includes(title) ? prev.filter((item) => item !== title) : [...prev, title]);
-  return <div className="mx-auto max-w-7xl p-6 lg:p-8">
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4"><div className="flex gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-300"><Library className="h-5 w-5" /></div><div><h1 className="text-xl font-bold text-gray-900">案例库</h1><p className="mt-1 text-sm text-gray-500">沉淀可复用的内容洞察、结构与表达方法</p></div></div><button className="flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm text-white"><Sparkles className="h-4 w-4" />生成选题灵感</button></div>
-    <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">作品集演示：所有案例标题、传播数据和拆解结论均为虚构示例，用于展示内容运营产品交互。</div>
-    <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div className="flex flex-wrap gap-2">{types.map((type) => <button onClick={() => setActive(type)} key={type} className={active === type ? "rounded-full bg-gray-900 px-3 py-1.5 text-sm text-white" : "rounded-full bg-white px-3 py-1.5 text-sm text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50"}>{type}</button>)}</div><label className="flex w-full items-center gap-2 rounded-lg bg-white px-3 py-2 ring-1 ring-gray-200 md:w-72"><Search className="h-4 w-4 text-gray-400" /><input value={query} onChange={(e) => setQuery(e.target.value)} className="w-full bg-transparent text-sm outline-none" placeholder="搜索案例或关键词" /></label></div>
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{filtered.map((item) => <article key={item.title} className="group rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"><div className={`mb-5 flex h-28 items-end rounded-xl p-4 ${item.color}`}><span className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium text-gray-700">{item.type}</span></div><div className="mb-3 flex items-center justify-between text-xs text-gray-400"><span className="flex items-center gap-1"><Tag className="h-3 w-3" />{item.tag}</span><span>模拟热度 {item.heat}</span></div><h2 className="min-h-12 text-base font-semibold leading-6 text-gray-900">{item.title}</h2><p className="mt-2 min-h-10 text-sm leading-5 text-gray-500">{item.desc}</p><div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-3"><button onClick={() => toggleSave(item.title)} className={saved.includes(item.title) ? "flex items-center gap-1.5 text-sm text-amber-700" : "flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800"}><Bookmark className={`h-4 w-4 ${saved.includes(item.title) ? "fill-current" : ""}`} />{saved.includes(item.title) ? "已收藏" : "收藏"}</button><button className="flex items-center gap-1 text-sm font-medium text-gray-900">查看拆解 <ArrowUpRight className="h-4 w-4" /></button></div></article>)}</div>
-    {!filtered.length && <div className="rounded-xl bg-white py-20 text-center text-sm text-gray-400">没有匹配的案例，换个关键词试试。</div>}
-  </div>;
+  const [mainTab, setMainTab] = useState<(typeof MAIN_TABS)[number]>("每日热点");
+  const [subSource, setSubSource] = useState("行业资讯");
+  const [date, setDate] = useState("最新");
+
+  const briefs = useMemo(() => BRIEFS, []);
+
+  return (
+    <div className="mx-auto max-w-6xl p-6 lg:p-8">
+      {/* 页头 */}
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: "#FFD100" }}>
+          <Flame className="h-5 w-5 text-gray-900" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">案例库</h1>
+          <p className="mt-0.5 text-sm text-gray-500">每日热点追踪 · 营销案例解读 · 一键生成选题脚本</p>
+        </div>
+      </div>
+
+      <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        作品集演示：以下热点资讯均为虚构示例，来源名称沿用了真实媒体样式仅用于还原产品交互。
+      </div>
+
+      {/* 主 tab */}
+      <div className="mb-4 flex gap-2 rounded-2xl bg-white p-2 ring-1 ring-gray-100">
+        {MAIN_TABS.map((t) => (
+          <button key={t} onClick={() => setMainTab(t)}
+            className={mainTab === t ? "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-gray-900" : "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm text-gray-500 hover:text-gray-800"}
+            style={mainTab === t ? { background: "#FFF3C4" } : {}}>
+            {t === "每日热点" && <Flame className="h-4 w-4" />}
+            {t === "商家案例" && <Trophy className="h-4 w-4" />}
+            {t === "营销案例" && <BookOpen className="h-4 w-4" />}
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* 子来源 */}
+      <div className="mb-4 grid grid-cols-3 gap-3">
+        {SUB_SOURCES.map((s) => (
+          <button key={s.name} onClick={() => setSubSource(s.name)}
+            className={subSource === s.name ? "rounded-xl bg-white p-3 text-left ring-2 ring-gray-900" : "rounded-xl bg-white p-3 text-left ring-1 ring-gray-100 hover:ring-gray-300"}>
+            <div className="text-sm font-semibold text-gray-900">{s.name}</div>
+            <div className="mt-0.5 text-xs text-gray-400">{s.sub}</div>
+          </button>
+        ))}
+      </div>
+
+      {/* 提示条 */}
+      <div className="mb-4 flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-700">
+        <Sparkles className="h-4 w-4 shrink-0" />
+        点击右侧黄色「做选题」按钮，将自动跳转脚本生成器并生成对应脚本
+      </div>
+
+      {/* 日期 + 更新 */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm text-gray-400">
+          <RefreshCw className="h-4 w-4" />
+          2026-09-16 · 来自数据库
+        </div>
+        <button className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-gray-900" style={{ background: "#FFD100" }}>
+          <RefreshCw className="h-4 w-4" /> 一键更新
+        </button>
+      </div>
+
+      {/* 日期筛选 */}
+      <div className="mb-5 flex flex-wrap gap-2">
+        {DATES.map((d) => (
+          <button key={d} onClick={() => setDate(d)}
+            className={date === d ? "rounded-full px-4 py-1.5 text-sm font-medium text-gray-900" : "rounded-full bg-white px-4 py-1.5 text-sm text-gray-500 ring-1 ring-gray-200 hover:bg-gray-50"}
+            style={date === d ? { background: "#FFD100" } : {}}>
+            {d}
+          </button>
+        ))}
+      </div>
+
+      {/* 资讯列表 */}
+      <div className="space-y-3">
+        {briefs.map((b) => (
+          <article key={b.title} className="rounded-2xl border border-gray-100 bg-white p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-600">{b.category}</span>
+                  <span className="text-xs text-gray-400">{b.source}</span>
+                </div>
+                <h3 className="text-base font-bold text-gray-900">{b.title}</h3>
+                <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-gray-500">{b.summary}</p>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1.5">
+                <Link href="/official/script-gen"
+                  className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-gray-900 hover:brightness-95"
+                  style={{ background: "#FFD100" }}>
+                  <ListOrdered className="h-4 w-4" /> 做选题
+                </Link>
+                <span className="text-xs text-gray-400">口播解读</span>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <p className="mt-6 text-center text-xs text-gray-400">
+        行业资讯整合自虎嗅早报、36氪8点1氪；热榜数据来自抖音、微博实时榜单，每日自动同步。
+      </p>
+    </div>
+  );
 }
